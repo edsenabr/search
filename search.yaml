@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: search
+  labels:
+    app: search
+  namespace: search
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: search
+  template:
+    metadata:
+      labels:
+        app: search
+    spec:
+      serviceAccountName: statement-demo
+      containers:
+      - name: search
+        image: 837108680928.dkr.ecr.us-east-1.amazonaws.com/search:latest
+        imagePullPolicy: Always
+        volumeMounts:
+        - mountPath: /tmp/application-aws.properties
+          name: config
+          subPath: application-aws.properties
+        - mountPath: /tmp/listaconta.csv
+          name: contas
+          subPath: listaconta.csv
+        # resources:
+        #   limits:
+        #     memory: "4Gi"
+        #     cpu: 2
+        #   requests:
+        #     memory: "4Gi"
+        #     cpu: 2
+        env:
+        - name: JAVA_OPTS
+          value: "-XX:MaxRAMPercentage=90.0"
+        - name: ELASTICSEARCH_URIS
+          valueFrom:
+            configMapKeyRef:
+              name: elasticsearch
+              key: url
+        - name: CLOUDWATCH_NAMESPACE
+          value: "statement12"
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+      volumes:
+      - configMap:
+          name: application.properties
+        name: config
+      - configMap:
+          name: listaconta.csv
+        name: contas
