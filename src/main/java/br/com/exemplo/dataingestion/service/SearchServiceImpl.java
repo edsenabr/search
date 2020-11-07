@@ -80,7 +80,7 @@ public class SearchServiceImpl implements SearchService {
         searchCounter.increment();
 
         records.addAndGet(amount);
-        log.info("Within {}ms, found {} items for account {} with query {}", searchResponse.getTook().getMillis(), amount, account, query);
+        log.debug("Within {}ms, found {} items for account {} with query {}", searchResponse.getTook().getMillis(), amount, account, query);
         methodTimer.stop(totalMethodTimer);
         return CompletableFuture.completedFuture(Boolean.TRUE);
     }
