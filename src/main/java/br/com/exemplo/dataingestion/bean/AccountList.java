@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Random;
 
 import javax.annotation.PostConstruct;
 
@@ -19,9 +20,14 @@ public class AccountList {
 	private String accountsFile;
 
 	private String[] accounts;
+	private Random random = new Random();
 
 	public String[] get() {
 		return this.accounts;
+	}
+
+	public String next() {
+		return 	accounts[random.nextInt(accounts.length)];
 	}
 
 	public int size() {
