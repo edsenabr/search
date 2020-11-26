@@ -6,7 +6,7 @@ metadata:
     app: search
   namespace: search
 spec:
-  replicas: 1
+  replicas: 0
   selector:
     matchLabels:
       app: search
@@ -27,16 +27,16 @@ spec:
         - mountPath: /tmp/listaconta.csv
           name: contas
           subPath: listaconta.csv
-        # resources:
-        #   limits:
-        #     memory: "4Gi"
-        #     cpu: 2
-        #   requests:
-        #     memory: "4Gi"
-        #     cpu: 2
+        resources:
+          limits:
+            memory: "1Gi"
+            # cpu: "0.5"
+          requests:
+            memory: "1Gi"
+            # cpu: "0.5"
         env:
         - name: JAVA_OPTS
-          value: "-XX:MaxRAMPercentage=90.0"
+          value: "-XX:MaxRAMPercentage=90.0 -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=1098"
         - name: ELASTICSEARCH_URIS
           valueFrom:
             configMapKeyRef:
@@ -44,10 +44,8 @@ spec:
               key: url
         - name: CLOUDWATCH_NAMESPACE
           value: "statement12"
-        - name: POD_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
+        ports:
+          - containerPort: 1098
       volumes:
       - configMap:
           name: application.properties

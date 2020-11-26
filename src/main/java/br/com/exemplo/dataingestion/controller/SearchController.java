@@ -18,7 +18,7 @@ public class SearchController {
     @Autowired
     ThreadPoolTaskScheduler scheduledExecutor;
 
-    @Value("${spring.task.execution.pool.core-size:8}")
+    @Value("${spring.task.scheduling.pool.size:8}")
     private int numeroThreadsBusca;
 
     @Value("${br.com.exemplo.dataingestion.throttle:1}")
@@ -32,11 +32,15 @@ public class SearchController {
 
     @SneakyThrows
     public void search() {
+        
         log.info("Inicializando buscas com {} threads", numeroThreadsBusca);
+        // while(!Thread.currentThread().isInterrupted()){  
+        //     searchService.search(query);
+        // }         
         for (int i = 0; i < numeroThreadsBusca;) {
             log.info("Criando worker {}", ++i);
             scheduledExecutor.scheduleWithFixedDelay(() -> {
-                    searchService.search(query).join();
+                    searchService.search(query);
                 }, 
                 intervaloBusca
             );

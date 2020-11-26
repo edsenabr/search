@@ -30,7 +30,7 @@ public class ElasticSearchConfig {
     @Value("${spring.elasticsearch.rest.uris}")
     private String host;
 
-    @Value("${spring.task.execution.pool.core-size:8}")
+    @Value("${spring.task.scheduling.pool.size:8}")
     private int numeroThreadsBusca;
 
     @Bean
@@ -50,6 +50,8 @@ public class ElasticSearchConfig {
                         public HttpAsyncClientBuilder customizeHttpClient(HttpAsyncClientBuilder httpClientBuilder) {
                             return httpClientBuilder
                             .addInterceptorLast(interceptor)
+                            .setMaxConnPerRoute(numeroThreadsBusca)
+                            .setMaxConnTotal(numeroThreadsBusca)
                             .setDefaultIOReactorConfig(
                                 IOReactorConfig.custom()
                                     .setIoThreadCount(numeroThreadsBusca)
