@@ -1,7 +1,12 @@
 package br.com.exemplo.dataingestion.config;
 
+import java.security.cert.CertificateException;
+
 import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 import com.amazonaws.auth.AWS4Signer;
 import com.amazonaws.auth.AWSCredentialsProvider;
@@ -11,6 +16,7 @@ import org.apache.http.HttpHost;
 import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.apache.http.impl.nio.reactor.IOReactorConfig;
+import org.apache.http.ssl.SSLContextBuilder;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder.HttpClientConfigCallback;
 import org.elasticsearch.client.RestHighLevelClient;
@@ -24,6 +30,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 
 import br.com.exemplo.dataingestion.bean.AWSRequestSigningApacheInterceptor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 @Configuration
@@ -56,6 +63,7 @@ public class ElasticSearchConfig {
             RestClient.builder(HttpHost.create(host))
                 .setHttpClientConfigCallback(
                     new HttpClientConfigCallback() {
+                        @SneakyThrows
                         public HttpAsyncClientBuilder customizeHttpClient(HttpAsyncClientBuilder httpClientBuilder) {
                             HttpAsyncClientBuilder builder =  httpClientBuilder
                             .addInterceptorLast(interceptor)
@@ -68,6 +76,26 @@ public class ElasticSearchConfig {
                             );
                             if (environment.acceptsProfiles(Profiles.of("remote"))) {
                                 log.error("Autenticação de Host SSL desabilitada");
+
+                                TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
+                                    public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                                        return null;
+                                    }
+        
+                                    @Override
+                                    public void checkClientTrusted(java.security.cert.X509Certificate[] arg0, String arg1)
+                                        throws CertificateException {}
+        
+                                    @Override
+                                    public void checkServerTrusted(java.security.cert.X509Certificate[] arg0, String arg1)
+                                        throws CertificateException {}
+                                    }
+                                };
+
+                                SSLContext context = SSLContext.getInstance("SSL");
+                                context.init(null, trustAllCerts, null);
+                                builder.setSSLContext(context);
+
                                 builder.setSSLHostnameVerifier(new HostnameVerifier() {
                                     @Override
                                     public boolean verify(String hostname, SSLSession session) {
