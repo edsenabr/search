@@ -1,5 +1,8 @@
 package br.com.exemplo.dataingestion.config;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLSession;
+
 import com.amazonaws.auth.AWS4Signer;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.regions.DefaultAwsRegionProviderChain;
@@ -17,11 +20,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.Scope;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 
 import br.com.exemplo.dataingestion.bean.AWSRequestSigningApacheInterceptor;
+import lombok.extern.slf4j.Slf4j;
 
 @Configuration
-
+@Slf4j
 public class ElasticSearchConfig {
 
     @Autowired
@@ -32,6 +38,9 @@ public class ElasticSearchConfig {
 
     @Value("${spring.task.scheduling.pool.size:8}")
     private int numeroThreadsBusca;
+
+    @Autowired
+    private Environment environment;
 
     @Bean
     @Scope("singleton")
@@ -48,7 +57,7 @@ public class ElasticSearchConfig {
                 .setHttpClientConfigCallback(
                     new HttpClientConfigCallback() {
                         public HttpAsyncClientBuilder customizeHttpClient(HttpAsyncClientBuilder httpClientBuilder) {
-                            return httpClientBuilder
+                            HttpAsyncClientBuilder builder =  httpClientBuilder
                             .addInterceptorLast(interceptor)
                             .setMaxConnPerRoute(numeroThreadsBusca)
                             .setMaxConnTotal(numeroThreadsBusca)
@@ -57,6 +66,16 @@ public class ElasticSearchConfig {
                                     .setIoThreadCount(numeroThreadsBusca)
                                     .build()
                             );
+                            if (environment.acceptsProfiles(Profiles.of("remote"))) {
+                                log.error("Autenticação de Host SSL desabilitada");
+                                builder.setSSLHostnameVerifier(new HostnameVerifier() {
+                                    @Override
+                                    public boolean verify(String hostname, SSLSession session) {
+                                        return true;
+                                    }
+                                });
+                            }
+                            return builder;
                         }
                     }
                 )
